@@ -31,14 +31,51 @@ page = st.sidebar.selectbox(
 st.image("house.jpg", width=500)
 
 df = pd.read_csv("house_pricing_dataset.csv")
+df = df.drop(columns=["Id"])
 
 # --- introduction ---
 if page == "Introduction 📘":
     st.header("01 Introduction 📘")
 
+    st.subheader("Business Case Presentation 💼")
+    st.write("The real estate market relies on accurate property valuations to support " \
+    "buying, selling, and investment decisions. This application uses historical housing " \
+    "data and machine learning to predict a home's sale price based on factors such as size, " \
+    "location, and property characteristics. By providing fast, data-driven estimates, the app " \
+    "helps reduce uncertainty and supports more informed decision-making for real estate " \
+    "professionals and homeowners.")
+
+    st.markdown("---")
+
+    st.subheader("Data Presentation 👨🏻‍🏫")
+
+    st.markdown("#### Data Preview 🔭")
+    rows = st.slider("Select a number of rows to display", 5, 2000)
+    st.dataframe(df.head(rows))
+
+    st.markdown("#### Missing values ❓")
+    missing = df.isnull().sum()
+    st.write(missing)
+    if missing.sum() == 0:
+        st.success("✅ No missing values found")
+    else:
+        st.warning("⚠️ You have missing values")
+
+    st.markdown("#### Summary Statistics 📈")
+    if st.button("Show Describe Table"):
+        st.dataframe(df.describe())
+
 # --- visualization ---
 elif page == "Data Visualization 📊":
     st.header("02 Data Visualization 📊")
+    
+
+
+
+
+
+
+
     
 
 # --- prediction ---
