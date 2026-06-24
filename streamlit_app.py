@@ -1,11 +1,9 @@
 # --- imports ---
 import streamlit as st
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
@@ -76,15 +74,12 @@ if page == "Introduction 📘":
 elif page == "Data Visualization 📊":
     st.header("02 Data Visualization 📊")
 
-    # Column definitions
     numeric_cols = ['Price', 'living area', 'lot area', 'Area of the house(excluding basement)', 
                     'Area of the basement', 'living_area_renov', 'lot_area_renov',
                     'number of bedrooms', 'number of bathrooms', 'number of floors',
                     'grade of the house', 'condition of the house', 'number of views',
                     'Number of schools nearby', 'Distance from the airport']
     categorical_cols = ['waterfront present', 'was_renovated']
-
-    # Feature engineering
     df['was_renovated'] = (df['Renovation Year'] != 0).astype(int)
 
     tab1, tab2, tab3, tab4 = st.tabs(
@@ -163,7 +158,7 @@ elif page == "Data Visualization 📊":
         plt.tight_layout()
         st.pyplot(fig)
         
-    # ---- TAB 3: Trends Over Time ----
+    # --- tab 3: trends over time ---
     with tab3:
         st.header("Trends Over Time 📈")
 
@@ -179,7 +174,7 @@ elif page == "Data Visualization 📊":
         plt.tight_layout()
         st.pyplot(fig)
 
-    # ---- TAB 4: Correlation Heatmap ----
+    # --- tab 4: correlation heatmap ---
     with tab4:
         st.header("Correlation Heatmap 🔥")
         df_numeric = df[numeric_cols]
@@ -247,7 +242,7 @@ elif page == "Explainability 🔍":
     st.header("04 Explainability 🔍")
     
 
-# --- MLflow Runs Page ---
+# --- hyperparamter tuning Page ---
 elif page == "Hyperparameter Tuning 📈":
     st.header("05 Hyperparameter Tuning 📈")
     
