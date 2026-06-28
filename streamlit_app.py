@@ -240,14 +240,223 @@ elif page == "Prediction 🔮":
 # --- explainability page ---
 elif page == "Explainability 🔍":
     st.header("04 Explainability 🔍")
-    
+
+    st.markdown("""
+    ### 🎯 What is this page?
+    Here we explain why the model makes the predictions it does.
+    We look at which features (columns) have the strongest influence on house price.
+    This helps answer the question: *what actually makes a house more expensive?*
+    """)
+    st.markdown("---")
+
+    df_exp = df.copy()
+    df_exp['was_renovated'] = (df_exp['Renovation Year'] != 0).astype(int)
+    df_exp = df_exp.drop(columns=['Renovation Year'])
+
+    features_exp = df_exp.columns.tolist()
+    features_exp.remove("Price")
+ 
+    X_exp = df_exp[features_exp]
+    y_exp = df_exp["Price"]
+ 
+    X_train_exp, X_test_exp, y_train_exp, y_test_exp = train_test_split(
+        X_exp, y_exp, test_size=0.2, random_state=42
+    )
+
+    model_choice = st.selectbox(
+        "Select model to explain",
+        ["Linear Regression", "Decision Tree", "Random Forest"]
+    )
+ 
+    if model_choice == "Linear Regression":
+        model_exp = LinearRegression()
+        model_exp.fit(X_train_exp, y_train_exp)
+        coef_df = pd.DataFrame({
+            "Feature": features_exp,
+            "Coefficient": model_exp.coef_
+        }).sort_values("Coefficient", ascending=False)
+ 
+        st.subheader("📊 Feature Coefficients — Linear Regression")
+        st.markdown("""
+        Each bar shows how much the predicted price changes when that feature increases by 1 unit.
+        - 🟢 **Green** = pushes price **up**
+        - 🔴 **Red** = pushes price **down**
+        """)
+
+        fig, ax = plt.subplots(figsize=(10, 7))
+        colors = ["#2ecc71" if c > 0 else "#e74c3c" for c in coef_df["Coefficient"]]
+        ax.barh(coef_df["Feature"], coef_df["Coefficient"], color=colors)
+        ax.axvline(0, color="black", linewidth=0.8)
+        ax.set_xlabel("Coefficient (effect on Price per 1-unit increase)")
+        ax.set_title("Linear Regression — Feature Coefficients")
+        plt.tight_layout()
+        st.pyplot(fig)
+ 
+        st.markdown("---")
+        st.subheader("📋 Coefficient Table")
+        st.dataframe(coef_df.reset_index(drop=True), use_container_width=True)
+        st.caption(f"Model intercept (baseline price): ${model_exp.intercept_:,.2f}")
+ 
+    else:
+        if model_choice == "Decision Tree":
+            model_exp = DecisionTreeRegressor(max_depth=5, random_state=42)
+        else:
+            model_exp = RandomForestRegressor(n_estimators=100, max_depth=5, random_state=42)
+ 
+        model_exp.fit(X_train_exp, y_train_exp)
+ 
+        importance_df = pd.DataFrame({
+            "Feature": features_exp,
+            "Importance": model_exp.feature_importances_
+        }).sort_values("Importance", ascending=False)
+ 
+        st.subheader(f"📊 Feature Importance — {model_choice}")
+        st.markdown("""
+        Each bar shows what percentage of the model's predictions are driven by that feature.
+        A longer bar = that feature explains more of the variation in house price.
+        """)
+ 
+        fig, ax = plt.subplots(figsize=(10, 7))
+        ax.barh(importance_df["Feature"], importance_df["Importance"], color="#3498db")
+        ax.set_xlabel("Importance Score (higher = more influential)")
+        ax.set_title(f"{model_choice} — Feature Importance")
+        plt.tight_layout()
+        st.pyplot(fig)
+ 
+        st.markdown("---")
+        st.subheader("📋 Importance Table")
+        st.dataframe(importance_df.reset_index(drop=True), use_container_width=True)
+ 
+        top_feature = importance_df.iloc[0]["Feature"]
+        top_score = importance_df.iloc[0]["Importance"]
+        st.info(f"🏆 Most influential feature: **{top_feature}** — accounts for {top_score*100:.1f}% of prediction power")
 
 # --- hyperparamter tuning Page ---
 elif page == "Hyperparameter Tuning 📈":
     st.header("05 Hyperparameter Tuning 📈")
-    
+    st.markdown("""
+    ### 🎯 What is Hyperparameter Tuning?
+    A **hyperparameter** is a setting you choose before training a model — like how deep
+    a decision tree is allowed to grow. Tuning means trying different values and tracking
+    which combination gives the best performance.
+ 
+    **How to use this page:**
+    1. Pick a model and adjust its settings using the sliders
+    2. Click **Run Experiment** to train and record the result
+    3. Repeat with different settings to compare
+    4. The table below tracks all your experiments so you can find the best one
+    """)
+    st.markdown("---")
+ 
+    df_tune = df.copy()
+    df_tune['was_renovated'] = (df_tune['Renovation Year'] != 0).astype(int)
+    df_tune = df_tune.drop(columns=['Renovation Year'])
+ 
+    features_tune = df_tune.columns.tolist()
+    features_tune.remove("Price")
+ 
+    X_tune = df_tune[features_tune]
+    y_tune = df_tune["Price"]
+ 
+    X_train_t, X_test_t, y_train_t, y_test_t = train_test_split(
+        X_tune, y_tune, test_size=0.2, random_state=42
+    )
+ 
+    if "experiment_log" not in st.session_state:
+        st.session_state.experiment_log = []
+ 
+    st.subheader("⚙️ Configure Your Experiment")
+ 
+    col1, col2 = st.columns(2)
+ 
+    with col1:
+        tune_model_name = st.selectbox(
+            "Select Model",
+            ["Linear Regression", "Decision Tree", "Random Forest"],
+            key="tune_model"
+        )
+ 
+    with col2:
+        tune_params = {}
+        if tune_model_name == "Decision Tree":
+            tune_params['max_depth'] = st.slider(
+                "Max Depth",
+                min_value=1, max_value=20, value=5,
+                help="How deep the tree can grow. Deeper = more complex. Too deep = overfitting."
+            )
+        elif tune_model_name == "Random Forest":
+            tune_params['n_estimators'] = st.slider(
+                "Number of Trees",
+                min_value=10, max_value=300, value=100, step=10,
+                help="How many trees in the forest. More trees = more accurate but slower."
+            )
+            tune_params['max_depth'] = st.slider(
+                "Max Depth",
+                min_value=1, max_value=20, value=5,
+                help="Max depth of each tree in the forest."
+            )
+        else:
+            st.info("Linear Regression has no hyperparameters to tune.")
+ 
+    if st.button("🚀 Run Experiment"):
+ 
+        if tune_model_name == "Linear Regression":
+            tune_model = LinearRegression()
+        elif tune_model_name == "Decision Tree":
+            tune_model = DecisionTreeRegressor(**tune_params, random_state=42)
+        elif tune_model_name == "Random Forest":
+            tune_model = RandomForestRegressor(**tune_params, random_state=42)
+
+        tune_model.fit(X_train_t, y_train_t)
+        tune_preds = tune_model.predict(X_test_t)
+ 
+        tune_mae = metrics.mean_absolute_error(y_test_t, tune_preds)
+        tune_mse = metrics.mean_squared_error(y_test_t, tune_preds)
+        tune_r2  = metrics.r2_score(y_test_t, tune_preds)
+ 
+        log_entry = {
+            "Model": tune_model_name,
+            "MAE": round(tune_mae, 2),
+            "MSE": round(tune_mse, 2),
+            "R²": round(tune_r2, 4),
+        }
+        log_entry.update(tune_params)
+ 
+
+        st.session_state.experiment_log.append(log_entry)
+        st.success(f"✅ Experiment recorded! R² = {tune_r2:.4f}")
+ 
+  
+        c1, c2, c3 = st.columns(3)
+        c1.metric("MAE", f"${tune_mae:,.2f}")
+        c2.metric("MSE", f"${tune_mse:,.2f}")
+        c3.metric("R²", f"{tune_r2:.4f}")
+ 
+    st.markdown("---")
+ 
+    st.subheader("📋 Experiment Log")
+    st.markdown("Every experiment you run gets recorded here. Compare to find the best settings.")
+ 
+    if st.session_state.experiment_log:
+        log_df = pd.DataFrame(st.session_state.experiment_log)
+        st.dataframe(log_df, use_container_width=True)
+
+        best_idx = log_df["R²"].idxmax()
+        best_row = log_df.loc[best_idx]
+        st.success(
+            f"🏆 Best experiment so far: **{best_row['Model']}** "
+            f"with R² = **{best_row['R²']}** and MAE = **${best_row['MAE']:,.2f}**"
+        )
+ 
+        if st.button("🗑️ Clear Experiment Log"):
+            st.session_state.experiment_log = []
+            st.info("Log cleared. Start new experiments above.")
+ 
+    else:
+        st.info("No experiments recorded yet. Configure settings above and click Run Experiment.")
 
 # --- conclusion ---
 elif page == "Conclusion 📖":
     st.header("06 Conclusion 📖")
-
+    
+    
