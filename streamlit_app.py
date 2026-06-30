@@ -458,5 +458,88 @@ elif page == "Hyperparameter Tuning 📈":
 # --- conclusion ---
 elif page == "Conclusion 📖":
     st.header("06 Conclusion 📖")
-    
+    st.markdown("""
+    ### 🏠 Project Summary
+    This application set out to solve a real problem in the Indian real estate market:
+    **predicting house prices accurately** to help buyers, sellers, and agents make
+    better-informed decisions without relying on guesswork.
+ 
+    We used a dataset of **14,619 houses** across India with features including:
+    - Living area, number of bedrooms, bathrooms, and floors
+    - Condition and grade of the house
+    - Renovation status
+    - Proximity to schools and distance from airports
+    """)
+ 
+    st.markdown("---")
+ 
+    st.subheader("📊 What the Models Told Us")
+    st.markdown("""
+    We trained and compared three models:
+ 
+    - **Random Forest** — highest R² score (~0.82), explaining the most variation in house prices
+    - **Decision Tree** — moderate performance (R² averaging 0.6–0.72)
+    - **Linear Regression** — lagged behind both, since its straight-line assumption can't
+      capture the more complex, non-linear relationships between features like living area and price
+    """)
+ 
+    st.markdown("---")
+ 
+    st.subheader("🏆 Key Findings — What Drives House Price?")
+    st.markdown("""
+    On our Explainability page, the feature importance rankings were:
+ 
+    - **Grade of the house** and **living area** — the two most important features in both
+      Decision Tree and Random Forest, with the longest bars by a wide margin
+    - **Postal code** and **built year** — the third and fourth most important features,
+      though noticeably less significant than the top two
+    - This confirms that the **size and quality** of a home are the strongest, most
+      reliable predictors of price across the entire dataset
+ 
+    A major difference appeared in the Linear Regression chart, however — it ranked
+    **waterfront present** as by far the single strongest driver of price, with a
+    coefficient far larger than every other feature combined. This does **not** actually
+    mean waterfront access is the most important factor in reality.
+    """)
+ 
+    st.markdown("---")
+ 
+    st.subheader("🔍 Why the Models Disagreed")
+    st.markdown("""
+    - **Linear Regression's coefficient** measures price change per single 1-unit increase.
+      Waterfront is a binary feature (0 or 1), and the few waterfront homes in the dataset
+      sold for dramatically more — so that 0-to-1 jump produces an inflated coefficient
+    - **Decision Tree and Random Forest** measure importance by how often a feature
+      actually helps split houses into accurate price groups across the *entire* dataset
+    - Since nearly every house has a different living area and grade, those features get
+      used constantly and earn high importance — waterfront, being rare, barely registers
+    - Because Random Forest had the highest overall R², we trust its feature ranking the
+      most: **living area and grade are the genuine, broadly applicable drivers of price**,
+      not waterfront access
+    """)
+ 
+    st.markdown("---")
+ 
+    st.subheader("💼 Business Value")
+    st.markdown("""
+    The prediction page of this app gives real estate professionals a tool to:
+ 
+    - **Estimate a home's price** before listing it, using the features that matter most
+    - **Prioritize renovations or upgrades** that genuinely add value — like increasing
+      living area or improving the home's overall grade — rather than chasing rare
+      features that may not generalize
+    - **Compare locations** using postal code trends as a secondary signal
+    - **Make faster decisions** backed by data rather than intuition alone
+    """)
+ 
+    st.markdown("---")
+ 
+ 
+    st.subheader("✅ Final Takeaway")
+    st.success(
+        "Random Forest was the clear winner, both in raw predictive accuracy and in giving "
+        "a feature importance ranking that reflects genuine, dataset-wide patterns. Living area "
+        "and grade of the house are the strongest, most trustworthy predictors of price — "
+        "providing a reliable foundation for real estate decision-making."
+    )
     
